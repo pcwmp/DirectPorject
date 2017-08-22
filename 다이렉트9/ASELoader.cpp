@@ -202,7 +202,7 @@ void ASE_Loader::Initialize()
 
 		if(pos != string::npos)
 		{
-			continue;
+			Read_GeomObject(AseFileData, model); continue;
 		}
 		
 	}
@@ -287,7 +287,7 @@ bool ASE_Loader::Read_SCENE(ifstream& AseFileData, ASE_MODEL& model, string& fil
 }
 
 
-bool ASE_Loader::Read_MaterialList(std::ifstream& AseFileData, ASE_MODEL& model)
+bool ASE_Loader::Read_MaterialList(ifstream& AseFileData, ASE_MODEL& model)
 {
 	string line;
 	int number = 0;
@@ -331,7 +331,7 @@ bool ASE_Loader::Read_MaterialList(std::ifstream& AseFileData, ASE_MODEL& model)
 	return true;
 }
 
-bool ASE_Loader::Read_Material(std::ifstream& AseFileData, ASE_MATERIAL& material)
+bool ASE_Loader::Read_Material(ifstream& AseFileData, ASE_MATERIAL& material)
 {
 	string line;
 	size_t pos;
@@ -357,7 +357,7 @@ bool ASE_Loader::Read_Material(std::ifstream& AseFileData, ASE_MATERIAL& materia
 	return true;
 }
 
-bool ASE_Loader::Read_Diffuse(std::ifstream& AseFileData, ASE_MATERIAL& material)
+bool ASE_Loader::Read_Diffuse(ifstream& AseFileData, ASE_MATERIAL& material)
 {
 	string line;
 	size_t pos;
@@ -384,3 +384,140 @@ bool ASE_Loader::Read_Diffuse(std::ifstream& AseFileData, ASE_MATERIAL& material
 
 	return true;
 }
+
+bool ASE_Loader::Read_GeomObject(ifstream& AseFileData, ASE_MODEL& model)
+{
+	string line;
+	size_t pos;
+
+	GEOM_OBJECT mesh;
+
+	while(1)
+	{
+		AseFileData.getline(readLine_, MAX_LINE);
+		line.assign(readLine_);
+
+		pos = line.find("}");
+
+		if( pos != string::npos)
+			break;
+
+		pos = line.find(Keywords[NODE_NAME]);
+
+		if( pos != string::npos)
+		{
+			mesh.name_ = parseDoubleQuotationMark();
+		}
+
+		pos = line.find(Keywords[NODE_PARENT]);
+
+		if( pos != string::npos)
+		{
+			mesh.parentName_ = parseDoubleQuotationMark();
+		}
+
+		pos = line.find(Keywords[MATERIAL_REF]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %d",readLine_, &mesh.materialRefId_);
+		}
+
+		pos = line.find(Keywords[NODE_TM]);
+
+		if( pos != string::npos)
+		{
+			Read_Tm(AseFileData, mesh);
+		}
+	}
+
+	//model.map_GeomObjects_.insert(
+
+	return true;
+}
+
+bool ASE_Loader::Read_Tm(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
+{
+	string line;
+	size_t pos;
+
+	D3DXMatrixIdentity(&mesh.mat_Tm_);
+
+	while(1)
+	{
+		AseFileData.getline(readLine_, MAX_LINE);
+		line.assign(readLine_);
+
+		pos = line.find("}");
+
+		if( pos != string::npos)
+			break;
+
+
+		//맥스 좌표계가 y랑 z축이 반전되어 있기때문에 그에 맞게 읽어주어야 한다
+		//11, 13, 12
+		//31, 33, 32
+		//21, 23, 22
+		//41, 43, 42
+
+		pos = line.find(Keywords[TM_ROW0]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %f %f %f",readLine_, &mesh.mat_Tm_._11,&mesh.mat_Tm_._13,&mesh.mat_Tm_._12);
+		}
+
+		pos = line.find(Keywords[TM_ROW1]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %f %f %f",readLine_, &mesh.mat_Tm_._31,&mesh.mat_Tm_._33,&mesh.mat_Tm_._32);
+		}
+
+		pos = line.find(Keywords[TM_ROW2]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %f %f %f",readLine_, &mesh.mat_Tm_._21,&mesh.mat_Tm_._23,&mesh.mat_Tm_._22);
+		}
+
+		pos = line.find(Keywords[TM_ROW3]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %f %f %f",readLine_, &mesh.mat_Tm_._41,&mesh.mat_Tm_._43,&mesh.mat_Tm_._42);
+		}
+		//
+
+		pos = line.find(Keywords[TM_POS]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %f %f %f",readLine_, &mesh.tmPos_.x,&mesh.tmPos_.z,&mesh.tmPos_.y);
+		}
+
+		//오일러 회전축, 회전각
+		pos = line.find(Keywords[TM_ROTAXIS]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %f %f %f",readLine_, &mesh.tmRot_.x,&mesh.tmRot_.z,&mesh.tmRot_.y);
+		}
+
+		pos = line.find(Keywords[TM_ROTANGLE]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %f",readLine_, &mesh.rotAngle_);
+
+			//오일러 회전을 사원수로
+			mesh.tmRotQuaternion_.x = (float)sinf(mesh.rotAngle_ / 2.0f) * mesh.tmRot_.x;
+			mesh.tmRotQuaternion_.y = (float)sinf(mesh.rotAngle_ / 2.0f) * mesh.tmRot_.y;
+			mesh.tmRotQuaternion_.z = (float)sinf(mesh.rotAngle_ / 2.0f) * mesh.tmRot_.z;
+			mesh.tmRotQuaternion_.w = (float)cosf(mesh.rotAngle_ / 2.0f);
+		}
+	}
+
+	return true;
+}
+

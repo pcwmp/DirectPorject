@@ -10,7 +10,17 @@ class ANIAMATION
 class GEOM_OBJECT
 {
 public:
-	D3DXMATRIXA16 mat_TrantsForm_;
+	std::string name_;
+	std::string parentName_;
+
+	//캐릭터 전체를 월드로 봤을때 메쉬를 로컬에서 캐릭터(월드)로 이동시켜주는 행렬
+	D3DXMATRIXA16 mat_Tm_; 
+
+	D3DXVECTOR3 tmPos_;
+
+	D3DXQUATERNION tmRotQuaternion_;
+	D3DXVECTOR3 tmRot_;
+	float rotAngle_;
 
 	D3DXMATRIXA16 mat_World_;		/// world TM 행렬(불변)
 	D3DXMATRIXA16 mat_Local_;		/// local TM 행렬(불변)
@@ -73,10 +83,17 @@ public:
 	void Initialize();
 	std::string parseDoubleQuotationMark();
 	void SkipHeader(std::ifstream& AseFileData);
+
+	//씬정보
 	bool Read_SCENE(std::ifstream& AseFileData, ASE_MODEL& model, std::string& filePath);
 	
+	//마테리얼 정보
 	bool Read_MaterialList(std::ifstream& AseFileData, ASE_MODEL& model);
 	bool Read_Material(std::ifstream& AseFileData, ASE_MATERIAL& material);
 	bool Read_Diffuse(std::ifstream& AseFileData, ASE_MATERIAL& material);
+
+	//지오메트리 정보
+	bool Read_GeomObject(std::ifstream& AseFileData, ASE_MODEL& model);
+	bool Read_Tm(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
 
 };
