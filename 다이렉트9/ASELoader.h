@@ -27,6 +27,17 @@ public:
 
 	std::string nodeName_; //본이름
 
+	//RigidVertex* vertexList
+	std::vector<D3DXVECTOR3> vec_vertexList_;
+	std::vector<MYINDEX> vec_faceList_; //인덱스
+
+	std::vector<D3DXVECTOR2> vec_tVertexList_; //uv
+
+	//ase포맺은 페이스 별로 텍스처를 다르게 입힐 수 있기 때문에 페이스에 uv를 갖는듯.
+	std::vector<TFACEINDEX> vec_tFaceList_; //face에 uv좌표를 매핑하는 인덱스.
+
+
+
 	LPDIRECT3DVERTEXBUFFER9	m_pVB;
 	LPDIRECT3DINDEXBUFFER9	m_pIB;
 
@@ -95,5 +106,10 @@ public:
 	//지오메트리 정보
 	bool Read_GeomObject(std::ifstream& AseFileData, ASE_MODEL& model);
 	bool Read_Tm(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
-
+	bool Read_Mesh(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
+	bool Read_VertexList(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
+	bool Read_FaceList(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
+	bool Read_TVertexList(std::ifstream& AseFileData, GEOM_OBJECT& mesh); //uv좌표
+	bool Read_TFaceList(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
+	bool Read_Normals(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
 };

@@ -9,6 +9,24 @@
 
 #include <fstream>
 
+struct UV
+{
+	float u;
+	float v;
+};
+struct MYINDEX
+{
+	int	_0, _1, _2;		/// 일반적으로 인덱스는 16비트의 크기를 갖는다.
+	int subMaterialRef_;
+	UV texUV[3];
+	D3DXVECTOR3 _faceNormal;
+	D3DXVECTOR3 _vertexNormal[3];
+};
+
+struct TFACEINDEX
+{
+	int	_0, _1, _2;		/// 일반적으로 인덱스는 16비트의 크기를 갖는다.
+};
 
 struct RigidVertex
 {

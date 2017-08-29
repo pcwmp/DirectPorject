@@ -41,11 +41,6 @@ struct CUSTOMVERTEX
 /// 사용자 정점 구조체에 관한 정보를 나타내는 FVF값
 #define D3DFVF_CUSTOMVERTEX (D3DFVF_XYZ|D3DFVF_DIFFUSE)
 
-struct MYINDEX
-{
-	WORD	_0, _1, _2;		/// 일반적으로 인덱스는 16비트의 크기를 갖는다.
-};
-
 /// 애니메이션 키값을 보간하기위한 배열
 D3DXVECTOR3		g_aniPos[2];		/// 위치(position)키 값
 D3DXQUATERNION	g_aniRot[2];		/// 회전(quaternion)키 값

@@ -57,6 +57,7 @@ _AseKey Keywords[] =
 
 	"*MESH_NORMALS {"		,	// MESH_NORMAL
 	"*MESH_FACENORMAL"		,	// MESH_FCENRL
+	"*MESH_VERTEXNORMAL"    ,	// MESH_VERTEXNORMAL
 
 	"*TM_ANIMATION {"		,	// TM_ANIMATION
 	"*CONTROL_ROT_TRACK {"	,	// ROT_TRACK
@@ -119,6 +120,7 @@ enum KeyID
 
 	MESH_NORMALS,
 	MESH_FACENORMAL,
+	MESH_VERTEXNORMAL,
 
 	TM_ANIMATION,	
 	CONTROL_ROT_TRACK,
@@ -429,6 +431,13 @@ bool ASE_Loader::Read_GeomObject(ifstream& AseFileData, ASE_MODEL& model)
 		{
 			Read_Tm(AseFileData, mesh);
 		}
+
+		pos = line.find(Keywords[MESH]);
+
+		if( pos != string::npos)
+		{
+			Read_Mesh(AseFileData, mesh);
+		}
 	}
 
 	//model.map_GeomObjects_.insert(
@@ -521,3 +530,271 @@ bool ASE_Loader::Read_Tm(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
 	return true;
 }
 
+bool ASE_Loader::Read_Mesh(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
+{
+	string line;
+	size_t pos;
+
+	while(1)
+	{
+		AseFileData.getline(readLine_, MAX_LINE);
+		line.assign(readLine_);
+
+		pos = line.find("}");
+
+		if( pos != string::npos)
+			break;
+
+		pos = line.find(Keywords[MESH_NUMVERTEX]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %d",readLine_, &mesh.vertexCount_);
+		}
+
+		pos = line.find(Keywords[MESH_NUMFACES]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %d",readLine_, &mesh.triangleCount_);
+		}
+
+		pos = line.find(Keywords[MESH_VERTEX_LIST]);
+
+		if( pos != string::npos)
+		{
+			Read_VertexList(AseFileData, mesh);
+		}
+
+		pos = line.find(Keywords[MESH_FACE_LIST]);
+
+		if( pos != string::npos)
+		{
+			Read_FaceList(AseFileData, mesh);
+		}
+
+		pos = line.find(Keywords[MESH_TVERTLIST]);
+
+		if( pos != string::npos)
+		{
+			Read_TVertexList(AseFileData, mesh);
+		}
+
+		pos = line.find(Keywords[MESH_TFACELIST]);
+
+		if( pos != string::npos)
+		{
+			Read_TFaceList(AseFileData, mesh);
+		}
+
+		pos = line.find(Keywords[MESH_NORMALS]);
+
+		if( pos != string::npos)
+		{
+			Read_Normals(AseFileData, mesh);
+		}
+	}
+
+	return true;
+}
+
+bool ASE_Loader::Read_VertexList(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
+{
+	string line;
+	size_t pos;
+
+	D3DXVECTOR3 vertex;
+
+	while(1)
+	{
+		AseFileData.getline(readLine_, MAX_LINE);
+		line.assign(readLine_);
+
+		pos = line.find("}");
+
+		if( pos != string::npos)
+			break;
+
+		pos = line.find(Keywords[MESH_VERTEX]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %f %f %f",readLine_, &vertex.x, &vertex.z, &vertex.y);
+
+			mesh.vec_vertexList_.push_back(vertex);
+		}
+	}
+
+	return true;
+}
+
+bool ASE_Loader::Read_FaceList(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
+{
+	int num;
+	char s[128];
+	char p[128];
+	string line;
+	size_t pos;
+
+	MYINDEX index;
+
+	while(1)
+	{
+		AseFileData.getline(readLine_, MAX_LINE);
+		line.assign(readLine_);
+
+		pos = line.find("}");
+
+		if( pos != string::npos)
+			break;
+
+		pos = line.find(Keywords[MESH_FACE]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %s %s %d %s %d %s %d",
+				s,s,s, &index._0, s, &index._2, s, &index._1);
+
+			pos = line.find("*MESH_SMOOTHING");
+
+			if( pos != string::npos)
+			{
+				sscanf(&line[pos],"%s %d %s %d", s, &num, s, &index.subMaterialRef_);
+			}
+			else
+			{
+				pos = line.find("*MESH_MTLID");
+
+				if( pos != string::npos)
+				{
+					sscanf(&line[pos],"%s %d", s, &index.subMaterialRef_);
+				}
+			}
+
+			mesh.vec_faceList_.push_back(index);
+		}
+	}
+
+	return true;
+}
+
+bool ASE_Loader::Read_TVertexList(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
+{
+	int num, pos;
+	string line;
+	D3DXVECTOR2 uv;
+
+	while(1)
+	{
+		AseFileData.getline(readLine_, MAX_LINE);
+		line.assign(readLine_);
+
+		pos = line.find("}");
+
+		if( pos != string::npos)
+			break;
+
+		pos = line.find(Keywords[MESH_TVERT]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %d %f %f",readLine_, &num, &uv.x, &uv.y);
+
+			//텍스처 매핑이 위/아래가 뒤집혀서 나오기때문에
+			uv.y = 1.0f - uv.y;
+
+			mesh.vec_tVertexList_.push_back(uv);
+		}
+	}
+
+	return true;
+}
+
+bool ASE_Loader::Read_TFaceList(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
+{
+	int pos, num;
+	string line;
+	TFACEINDEX index;
+
+	while(1)
+	{
+		AseFileData.getline(readLine_, MAX_LINE);
+		line.assign(readLine_);
+
+		pos = line.find("}");
+
+		if( pos != string::npos)
+			break;
+
+		pos = line.find(Keywords[MESH_TFACE]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %d %d %d %d",readLine_, &num, &index._0, &index._2, &index._1);
+
+			mesh.vec_tFaceList_.push_back(index);
+
+			//읽은 텍스처 좌표 인덱스를 참조하여 Face에 텍스처 좌표를 대입
+			mesh.vec_faceList_[num].texUV[0].u = mesh.vec_tVertexList_[index._0].x;
+			mesh.vec_faceList_[num].texUV[0].v = mesh.vec_tVertexList_[index._0].y;
+
+			mesh.vec_faceList_[num].texUV[2].u = mesh.vec_tVertexList_[index._1].x;
+			mesh.vec_faceList_[num].texUV[2].v = mesh.vec_tVertexList_[index._1].y;
+
+			mesh.vec_faceList_[num].texUV[2].u = mesh.vec_tVertexList_[index._2].x;
+			mesh.vec_faceList_[num].texUV[2].v = mesh.vec_tVertexList_[index._2].y;
+		}
+	}
+
+	return true;
+}
+
+bool ASE_Loader::Read_Normals(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
+{
+	int pos, num;
+	string line;
+
+	float x,y,z;
+
+	int idx[3] = {0,2,1};
+	int t = 0;
+
+	while(1)
+	{
+		AseFileData.getline(readLine_, MAX_LINE);
+		line.assign(readLine_);
+
+		pos = line.find("}");
+
+		if( pos != string::npos)
+			break;
+
+		pos = line.find(Keywords[MESH_FACENORMAL]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %d %f %f %f",readLine_, &num, &x, &z, &y);
+
+			mesh.vec_faceList_[num]._faceNormal.x = x;
+			mesh.vec_faceList_[num]._faceNormal.y = y;
+			mesh.vec_faceList_[num]._faceNormal.z = z;
+		}
+
+		pos = line.find(Keywords[MESH_VERTEXNORMAL]);
+
+		if( pos != string::npos)
+		{
+			sscanf(line.c_str(), "%s %d %f %f %f",readLine_, &num, &x, &z, &y);
+
+			mesh.vec_faceList_[num]._vertexNormal[idx[t]].x = x;
+			mesh.vec_faceList_[num]._vertexNormal[idx[t]].y = y;
+			mesh.vec_faceList_[num]._vertexNormal[idx[t]].z = z;
+
+			t++;
+			if(t > 2)
+				t = 0;
+		}
+	}
+
+	return true;
+}
