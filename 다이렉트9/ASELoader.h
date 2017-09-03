@@ -10,6 +10,9 @@ class ANIAMATION
 class GEOM_OBJECT
 {
 public:
+	int parentIdx_;
+	int childIdx_;
+public:
 	std::string name_;
 	std::string parentName_;
 
@@ -25,21 +28,20 @@ public:
 	D3DXMATRIXA16 mat_World_;		/// world TM 행렬(불변)
 	D3DXMATRIXA16 mat_Local_;		/// local TM 행렬(불변)
 
-	std::string nodeName_; //본이름
-
-	//RigidVertex* vertexList
-	std::vector<D3DXVECTOR3> vec_vertexList_;
-	std::vector<MYINDEX> vec_faceList_; //인덱스
-
 	std::vector<D3DXVECTOR2> vec_tVertexList_; //uv
+	std::vector<D3DXVECTOR3> vec_vertexList_;
 
 	//ase포맺은 페이스 별로 텍스처를 다르게 입힐 수 있기 때문에 페이스에 uv를 갖는듯.
-	std::vector<TFACEINDEX> vec_tFaceList_; //face에 uv좌표를 매핑하는 인덱스.
+	std::vector<TFACEINDEX> vec_tFaceList_; //vec_tVertexList_ 를 인덱싱한다.
+
+	//결론적으로 이녀석에 메쉬를 그리기 위한 모든 정보가 다 들어 있다.
+	std::vector<MYINDEX> vec_faceList_; //여기에 위에 tFaceList를 이용해서 uv가 대입된 상태.
 
 
+	LPDIRECT3DVERTEXBUFFER9	pVB_;
+	LPDIRECT3DINDEXBUFFER9	pIB_;
 
-	LPDIRECT3DVERTEXBUFFER9	m_pVB;
-	LPDIRECT3DINDEXBUFFER9	m_pIB;
+	DWORD dwFVF_;		/// 정점의 fvf값
 
 	int vertexCount_;
 	int triangleCount_;
@@ -47,6 +49,15 @@ public:
 	int materialRefId_;
 
 	ANIAMATION* ani_;
+
+public:
+	GEOM_OBJECT()
+	{
+		name_ = "";
+		parentName_ = "";
+	}
+
+	void MakeVertexAndIndexBuffer();
 };
 
 class ASE_MATERIAL
@@ -80,6 +91,12 @@ public:
 public:
 	std::map<int,ASE_MATERIAL> map_Materials_;
 	std::map<int,GEOM_OBJECT> map_GeomObjects_;
+
+public:
+	void MakeLink();
+	void SetVerTex_WorldToLocal();
+	void CheckFaceMaterialId();
+	void MakeVertex();
 };
 
 const int MAX_LINE = 1000;
@@ -112,4 +129,12 @@ public:
 	bool Read_TVertexList(std::ifstream& AseFileData, GEOM_OBJECT& mesh); //uv좌표
 	bool Read_TFaceList(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
 	bool Read_Normals(std::ifstream& AseFileData, GEOM_OBJECT& mesh);
+
+public:
+	void MakeLink();
+	void SetVerTex_WorldToLocal();
+	void CheckFaceMaterialId();
+	void MakeVertex();
 };
+
+extern ASE_Loader g_aseLoader;

@@ -1,9 +1,12 @@
 #include "ASELoader.h"
+#include "Device.h"
+
 using namespace std;
 
 
 //int r = AseFileData.tellg();
 //AseFileData.seekg(r, AseFileData.beg);
+ASE_Loader g_aseLoader;
 
 typedef char _AseKey[64];
 
@@ -210,7 +213,50 @@ void ASE_Loader::Initialize()
 	}
 
 	map_Models_.insert(make_pair(0, model));
+	
+	MakeLink();
+	SetVerTex_WorldToLocal();
+	CheckFaceMaterialId();
+}
 
+void ASE_Loader::MakeLink()
+{
+	auto iter = map_Models_.begin();
+
+	for( ; iter != map_Models_.end(); ++iter)
+	{
+		iter->second.MakeLink();
+	}
+}
+
+void ASE_Loader::SetVerTex_WorldToLocal()
+{
+	auto iter = map_Models_.begin();
+
+	for( ; iter != map_Models_.end(); ++iter)
+	{
+		iter->second.SetVerTex_WorldToLocal();
+	}
+}
+
+void ASE_Loader::CheckFaceMaterialId()
+{
+	auto iter = map_Models_.begin();
+
+	for( ; iter != map_Models_.end(); ++iter)
+	{
+		iter->second.CheckFaceMaterialId();
+	}
+}
+
+void ASE_Loader::MakeVertex()
+{
+	auto iter = map_Models_.begin();
+
+	for( ; iter != map_Models_.end(); ++iter)
+	{
+		iter->second.MakeVertex();
+	}
 }
 
 void ASE_Loader::SkipHeader(ifstream& AseFileData)
@@ -797,4 +843,121 @@ bool ASE_Loader::Read_Normals(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
 	}
 
 	return true;
+}
+
+
+void ASE_MODEL::MakeLink()
+{
+	auto uter = map_GeomObjects_.begin();
+
+	//부모 자식 인덱스로 링크 시켜준다.
+	for(; uter != map_GeomObjects_.end(); ++uter)
+	{
+		if(uter->second.parentName_ != "")
+		{
+			auto iter = map_GeomObjects_.begin();
+
+			for(; iter != map_GeomObjects_.end(); ++iter)
+			{
+				if(iter->second.name_ == uter->second.parentName_)
+				{
+					uter->second.parentIdx_ = iter->first;
+					iter->second.childIdx_ = uter->first;
+				}
+			}
+		}
+	}
+}
+
+void ASE_MODEL::SetVerTex_WorldToLocal()
+{
+	auto uter = map_GeomObjects_.begin();
+
+	//버텍스가 월드 좌표로 뽑히므로 애니메이션을 위해서 로컬로 바꺼준다.
+	D3DXMATRIX mat;
+	D3DXVECTOR3 vTemp;
+
+	for(; uter != map_GeomObjects_.end(); ++uter)
+	{
+		D3DXMatrixInverse(&mat, 0, &(uter->second.mat_Tm_));
+
+		for(int i = 0; i < uter->second.vec_vertexList_.size(); ++i)
+		{
+			D3DXVec3TransformCoord(&vTemp, &uter->second.vec_vertexList_[i], &mat);
+			uter->second.vec_vertexList_[i] = vTemp;
+		}
+	}
+}
+
+void ASE_MODEL::CheckFaceMaterialId()
+{
+	auto uter = map_GeomObjects_.begin();
+
+	for(; uter != map_GeomObjects_.end(); ++uter)
+	{
+		for(int i = 0; i < uter->second.vec_faceList_.size(); ++i)
+		{
+			if(uter->second.vec_faceList_[i].subMaterialRef_ >= map_Materials_.size())
+			{
+				uter->second.vec_faceList_[i].subMaterialRef_ = 0;
+				_ASSERT(0);
+			}
+		}
+	}
+}
+
+void ASE_MODEL::MakeVertex()
+{
+	auto uter = map_GeomObjects_.begin();
+
+	for(; uter != map_GeomObjects_.end(); ++uter)
+	{
+		uter->second.MakeVertexAndIndexBuffer();
+	}
+}
+
+void GEOM_OBJECT::MakeVertexAndIndexBuffer()
+{
+	VOID*		pV;	
+	VOID*		pI;
+
+	dwFVF_ = RigidVertex::FVF;
+	
+	int faceCount = vec_faceList_.size();
+
+	// 정점 버퍼 생성 (페이스마다 정점 3개) 정점마다 uv, 노멀값이 다르기때문에 페이스마다 생성한다.
+	g_Device.pd3dDevice_->CreateVertexBuffer( faceCount * sizeof(RigidVertex), 0, dwFVF_, D3DPOOL_DEFAULT, &pVB_, NULL );
+	pVB_->Lock( 0, faceCount * sizeof(RigidVertex), (void**)&pV, 0 );
+
+	for( int i = 0; i < faceCount; ++i)
+	{
+		int _0 = vec_faceList_[i]._0;
+		int _0 = vec_faceList_[i]._1;
+		int _0 = vec_faceList_[i]._2;
+		((RigidVertex*)pV)[0].
+	}
+
+	memcpy( pV, &pMesh->m_vtxFinal[0], faceCount * sizeof(RigidVertex) );
+	pVB_->Unlock();
+
+	//D3DCAPS9 caps;
+	//m_pDev->GetDeviceCaps( &caps );
+	
+	// 인덱스가 32비트 인덱스를 지원하면 32비트 인덱스 버퍼 생성
+	//if( caps.MaxVertexIndex > 0x0000ffff )
+	//else // 아니라면 16비트 인덱스로 인덱스 버퍼 생성
+
+	//인덱스 버퍼 생성.
+	
+	m_pDev->CreateIndexBuffer( m_nTriangles * sizeof(Index3i), 0, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &m_pIB, NULL );
+	m_pIB->Lock( 0, m_nTriangles * sizeof(Index3i), (void**)&pI, 0 );
+	DWORD* pW = (DWORD*)pI;
+	for( i = 0 ; i < m_nTriangles ; i++ )
+	{
+		*(pW+0) = pMesh->m_idxFinal[i].i[0];
+		*(pW+1) = pMesh->m_idxFinal[i].i[1];
+		*(pW+2) = pMesh->m_idxFinal[i].i[2];
+		pW += 3;
+	}
+	m_pIB->Unlock();
 }
