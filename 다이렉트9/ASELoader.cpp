@@ -699,7 +699,7 @@ bool ASE_Loader::Read_FaceList(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
 		if( pos != string::npos)
 		{
 			sscanf(line.c_str(), "%s %s %s %d %s %d %s %d",
-				s,s,s, &index._0, s, &index._2, s, &index._1);
+				s,s,s, &index.index[0], s, &index.index[2], s, &index.index[1]);
 
 			pos = line.find("*MESH_SMOOTHING");
 
@@ -929,35 +929,55 @@ void GEOM_OBJECT::MakeVertexAndIndexBuffer()
 	g_Device.pd3dDevice_->CreateVertexBuffer( faceCount * sizeof(RigidVertex), 0, dwFVF_, D3DPOOL_DEFAULT, &pVB_, NULL );
 	pVB_->Lock( 0, faceCount * sizeof(RigidVertex), (void**)&pV, 0 );
 
+	int pos = 0;
+
 	for( int i = 0; i < faceCount; ++i)
 	{
-		int _0 = vec_faceList_[i]._0;
-		int _0 = vec_faceList_[i]._1;
-		int _0 = vec_faceList_[i]._2;
-		((RigidVertex*)pV)[0].
+		for(int p = 0; p < 3; ++p, ++pos)
+		{
+			//버텍스 포지션
+			((RigidVertex*)pV)[pos].p.x = vec_vertexList_[vec_faceList_[i].index[p]].x;
+			((RigidVertex*)pV)[pos].p.y = vec_vertexList_[vec_faceList_[i].index[p]].y;
+			((RigidVertex*)pV)[pos].p.z = vec_vertexList_[vec_faceList_[i].index[p]].z;
+
+			//노멀
+			((RigidVertex*)pV)[pos].n.x = vec_faceList_[i]._vertexNormal[p].x;
+			((RigidVertex*)pV)[pos].n.y = vec_faceList_[i]._vertexNormal[p].y;
+			((RigidVertex*)pV)[pos].n.z = vec_faceList_[i]._vertexNormal[p].z;
+
+			//UV
+			((RigidVertex*)pV)[pos].t.x = vec_faceList_[i].texUV[p].u;
+			((RigidVertex*)pV)[pos].t.y = vec_faceList_[i].texUV[p].v;
+
+			//버텍스 버퍼에 들어가면서 변경되는 인덱스
+			vec_faceList_[i].vertexBufferIdx[p] = pos;
+		}
 	}
 
-	memcpy( pV, &pMesh->m_vtxFinal[0], faceCount * sizeof(RigidVertex) );
 	pVB_->Unlock();
+
+	g_Device.pd3dDevice_->CreateIndexBuffer( faceCount * sizeof(INDEX), 0, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &pIB_, NULL );
+	pIB_->Lock( 0, faceCount * sizeof(INDEX), (void**)&pI, 0 );
+
+	DWORD* pW = (DWORD*)pI;
+
+	for(int i = 0 ; i < faceCount ; i++ )
+	{
+		((INDEX*)pW)[pos].i[0] = vec_faceList_[i].vertexBufferIdx[0];
+		((INDEX*)pW)[pos].i[1] = vec_faceList_[i].vertexBufferIdx[1];
+		((INDEX*)pW)[pos].i[2] = vec_faceList_[i].vertexBufferIdx[2];
+
+		pW += 3;
+	}
+
+	pIB_->Unlock();
 
 	//D3DCAPS9 caps;
 	//m_pDev->GetDeviceCaps( &caps );
-	
+
 	// 인덱스가 32비트 인덱스를 지원하면 32비트 인덱스 버퍼 생성
 	//if( caps.MaxVertexIndex > 0x0000ffff )
 	//else // 아니라면 16비트 인덱스로 인덱스 버퍼 생성
 
 	//인덱스 버퍼 생성.
-	
-	m_pDev->CreateIndexBuffer( m_nTriangles * sizeof(Index3i), 0, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &m_pIB, NULL );
-	m_pIB->Lock( 0, m_nTriangles * sizeof(Index3i), (void**)&pI, 0 );
-	DWORD* pW = (DWORD*)pI;
-	for( i = 0 ; i < m_nTriangles ; i++ )
-	{
-		*(pW+0) = pMesh->m_idxFinal[i].i[0];
-		*(pW+1) = pMesh->m_idxFinal[i].i[1];
-		*(pW+2) = pMesh->m_idxFinal[i].i[2];
-		pW += 3;
-	}
-	m_pIB->Unlock();
 }

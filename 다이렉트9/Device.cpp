@@ -26,7 +26,7 @@ HRESULT Device::InitD3D( HWND hWnd )
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
 
     /// 디바이스 생성
-    if( FAILED( g_pD3D->CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
+    if( FAILED( pD3D_->CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
                                       D3DCREATE_SOFTWARE_VERTEXPROCESSING,
                                       &d3dpp, &pd3dDevice_ ) ) )
     {

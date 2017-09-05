@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <map>
 #include <vector>
@@ -14,18 +16,26 @@ struct UV
 	float u;
 	float v;
 };
+
 struct MYINDEX
 {
-	int	_0, _1, _2;		/// 일반적으로 인덱스는 16비트의 크기를 갖는다.
+	int	index[3];		/// 일반적으로 인덱스는 16비트의 크기를 갖는다.
 	int subMaterialRef_;
 	UV texUV[3];
 	D3DXVECTOR3 _faceNormal;
 	D3DXVECTOR3 _vertexNormal[3];
+
+	int vertexBufferIdx[3];
 };
 
 struct TFACEINDEX
 {
 	int	_0, _1, _2;		/// 일반적으로 인덱스는 16비트의 크기를 갖는다.
+};
+
+struct INDEX
+{
+	WORD i[3];
 };
 
 struct RigidVertex

@@ -21,12 +21,18 @@
     <ClCompile Include="ASELoader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Device.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ASELoader.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
     <ClInclude Include="ConstHeader.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Device.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
   </ItemGroup>
