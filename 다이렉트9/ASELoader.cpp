@@ -804,6 +804,7 @@ bool ASE_Loader::Read_Normals(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
 
 	int idx[3] = {0,2,1};
 	int t = 0;
+	int faceIdx;
 
 	while(1)
 	{
@@ -819,11 +820,11 @@ bool ASE_Loader::Read_Normals(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
 
 		if( pos != string::npos)
 		{
-			sscanf(line.c_str(), "%s %d %f %f %f",readLine_, &num, &x, &z, &y);
+			sscanf(line.c_str(), "%s %d %f %f %f",readLine_, &faceIdx, &x, &z, &y);
 
-			mesh.vec_faceList_[num]._faceNormal.x = x;
-			mesh.vec_faceList_[num]._faceNormal.y = y;
-			mesh.vec_faceList_[num]._faceNormal.z = z;
+			mesh.vec_faceList_[faceIdx]._faceNormal.x = x;
+			mesh.vec_faceList_[faceIdx]._faceNormal.y = y;
+			mesh.vec_faceList_[faceIdx]._faceNormal.z = z;
 		}
 
 		pos = line.find(Keywords[MESH_VERTEXNORMAL]);
@@ -832,9 +833,9 @@ bool ASE_Loader::Read_Normals(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
 		{
 			sscanf(line.c_str(), "%s %d %f %f %f",readLine_, &num, &x, &z, &y);
 
-			mesh.vec_faceList_[num]._vertexNormal[idx[t]].x = x;
-			mesh.vec_faceList_[num]._vertexNormal[idx[t]].y = y;
-			mesh.vec_faceList_[num]._vertexNormal[idx[t]].z = z;
+			mesh.vec_faceList_[faceIdx]._vertexNormal[idx[t]].x = x;
+			mesh.vec_faceList_[faceIdx]._vertexNormal[idx[t]].y = y;
+			mesh.vec_faceList_[faceIdx]._vertexNormal[idx[t]].z = z;
 
 			t++;
 			if(t > 2)
