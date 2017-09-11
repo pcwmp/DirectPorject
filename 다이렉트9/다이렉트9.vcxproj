@@ -85,11 +85,19 @@
     <ClCompile Include="ASELoader.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="RenderMgr.cpp" />
+    <ClCompile Include="Source.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source1.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ASELoader.h" />
     <ClInclude Include="ConstHeader.h" />
     <ClInclude Include="Device.h" />
+    <ClInclude Include="RenderMgr.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
