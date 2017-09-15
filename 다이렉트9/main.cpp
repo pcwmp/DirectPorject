@@ -54,14 +54,19 @@ VOID Render()
     /// 렌더링 시작
     if( SUCCEEDED( g_Device.pd3dDevice_->BeginScene() ) )
     {
-        g_Device.pd3dDevice_->EndScene();
+		auto iter = g_aseLoader.map_Models_.begin();
+
+		for(; iter != g_aseLoader.map_Models_.end(); ++iter)
+		{
+			iter->second.Render();
+		}
+
+		g_Device.pd3dDevice_->EndScene();
     }
 
     /// 후면버퍼를 보이는 화면으로!
     g_Device.pd3dDevice_->Present( NULL, NULL, NULL, NULL );
 }
-
-
 
 
 /**-----------------------------------------------------------------------------
@@ -106,11 +111,11 @@ INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR, INT )
                               GetDesktopWindow(), NULL, wc.hInstance, NULL );
 
 
-	g_aseLoader.Initialize();
-
     /// Direct3D 초기화
 	if( SUCCEEDED( g_Device.InitD3D( hWnd ) ) )
     {
+		g_aseLoader.Initialize();
+
 		SetupCamera();
 
         /// 윈도우 출력

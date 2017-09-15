@@ -1,4 +1,5 @@
 #include "ASELoader.h"
+#include "RenderMgr.h"
 #include "Device.h"
 
 using namespace std;
@@ -216,6 +217,7 @@ void ASE_Loader::Initialize()
 	
 	MakeLink();
 	SetVerTex_WorldToLocal();
+	MakeVertex();
 	CheckFaceMaterialId();
 }
 
@@ -486,7 +488,10 @@ bool ASE_Loader::Read_GeomObject(ifstream& AseFileData, ASE_MODEL& model)
 		}
 	}
 
-	//model.map_GeomObjects_.insert(
+	static int number = 0;
+
+
+	model.map_GeomObjects_.insert(make_pair(number++, mesh));
 
 	return true;
 }
@@ -847,6 +852,25 @@ bool ASE_Loader::Read_Normals(std::ifstream& AseFileData, GEOM_OBJECT& mesh)
 }
 
 
+void ASE_MODEL::Update()
+{
+	auto iter = map_GeomObjects_.begin();
+
+	for(; iter != map_GeomObjects_.end(); ++iter)
+	{
+		iter->second.Update(this);
+	}
+}
+
+void ASE_MODEL::Render()
+{
+	auto iter = map_GeomObjects_.begin();
+
+	for(; iter != map_GeomObjects_.end(); ++iter)
+	{
+		iter->second.Render(this);
+	}
+}
 void ASE_MODEL::MakeLink()
 {
 	auto uter = map_GeomObjects_.begin();
@@ -926,7 +950,8 @@ void GEOM_OBJECT::MakeVertexAndIndexBuffer()
 	
 	int faceCount = vec_faceList_.size();
 
-	// 정점 버퍼 생성 (페이스마다 정점 3개) 정점마다 uv, 노멀값이 다르기때문에 페이스마다 생성한다.
+	// 정점 버퍼 생성 (페이스마다 정점 3개) 
+	//정점마다 uv, 노멀값이 다를 수 있기 때문에 페이스 마다 생성 한다.
 	g_Device.pd3dDevice_->CreateVertexBuffer( faceCount * sizeof(RigidVertex), 0, dwFVF_, D3DPOOL_DEFAULT, &pVB_, NULL );
 	pVB_->Lock( 0, faceCount * sizeof(RigidVertex), (void**)&pV, 0 );
 
@@ -981,4 +1006,24 @@ void GEOM_OBJECT::MakeVertexAndIndexBuffer()
 	//else // 아니라면 16비트 인덱스로 인덱스 버퍼 생성
 
 	//인덱스 버퍼 생성.
+}
+
+void GEOM_OBJECT::Update(ASE_MODEL* model)
+{
+
+}
+
+void GEOM_OBJECT::Render(ASE_MODEL* model)
+{
+	auto iter = model->map_Materials_.find(materialRefId_);
+
+	if(iter == model->map_Materials_.end())
+		return;
+
+	g_renderMgr.SetIndices(pIB_);
+	g_renderMgr.SetStreamSource(0, pVB_, 0, sizeof(RigidVertex) );
+
+	//g_renderMgr.SetTexture(0, iter->second.pTexture_);
+
+	g_renderMgr.DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, vec_faceList_.size() * 3, 0, vec_faceList_.size());
 }

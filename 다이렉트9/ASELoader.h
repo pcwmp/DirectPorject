@@ -7,6 +7,8 @@ class ANIAMATION
 	std::vector<D3DXVECTOR3>		scl_;
 };
 
+class ASE_MODEL;
+
 class GEOM_OBJECT
 {
 public:
@@ -58,6 +60,8 @@ public:
 	}
 
 	void MakeVertexAndIndexBuffer();
+	void Update(ASE_MODEL* model);
+	void Render(ASE_MODEL* model);
 };
 
 class ASE_MATERIAL
@@ -97,6 +101,9 @@ public:
 	void SetVerTex_WorldToLocal();
 	void CheckFaceMaterialId();
 	void MakeVertex();
+public:
+	void Update();
+	void Render();
 };
 
 const int MAX_LINE = 1000;
